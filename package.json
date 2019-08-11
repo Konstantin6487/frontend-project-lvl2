@@ -7,7 +7,9 @@
     "gendiff": "dist/bin/gendiff.js"
   },
   "scripts": {
-    "build": "NODE_ENV=production babel src --out-dir dist --source-maps inline"
+    "build": "NODE_ENV=production babel src --out-dir dist --source-maps inline",
+    "test": "jest --watch",
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -19,18 +21,26 @@
     "url": "https://github.com/Konstantin6487/frontend-project-lvl2/issues"
   },
   "homepage": "https://github.com/Konstantin6487/frontend-project-lvl2#readme",
+  "jest": {
+    "testEnvironment": "node"
+  },
   "devDependencies": {
     "@babel/cli": "^7.5.5",
     "@babel/core": "^7.5.5",
     "@babel/node": "^7.5.5",
     "@babel/preset-env": "^7.5.5",
     "babel-eslint": "^10.0.2",
+    "babel-jest": "^24.8.0",
     "eslint": "^6.1.0",
     "eslint-config-airbnb-base": "^14.0.0",
     "eslint-plugin-babel": "^5.3.0",
-    "eslint-plugin-import": "^2.18.2"
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-jest": "^22.15.0",
+    "jest": "^24.8.0",
+    "jest-cli": "^24.8.0"
   },
   "dependencies": {
-    "commander": "^3.0.0"
+    "commander": "^3.0.0",
+    "lodash": "^4.17.15"
   }
 }
