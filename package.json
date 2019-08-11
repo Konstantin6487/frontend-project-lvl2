@@ -1,0 +1,36 @@
+{
+  "name": "frontend-project-lvl2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "bin": {
+    "gendiff": "dist/bin/gendiff.js"
+  },
+  "scripts": {
+    "build": "NODE_ENV=production babel src --out-dir dist --source-maps inline"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Konstantin6487/frontend-project-lvl2.git"
+  },
+  "author": "Konstantin Bochinin <Konstantin6487@rambler.ru>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Konstantin6487/frontend-project-lvl2/issues"
+  },
+  "homepage": "https://github.com/Konstantin6487/frontend-project-lvl2#readme",
+  "devDependencies": {
+    "@babel/cli": "^7.5.5",
+    "@babel/core": "^7.5.5",
+    "@babel/node": "^7.5.5",
+    "@babel/preset-env": "^7.5.5",
+    "babel-eslint": "^10.0.2",
+    "eslint": "^6.1.0",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-babel": "^5.3.0",
+    "eslint-plugin-import": "^2.18.2"
+  },
+  "dependencies": {
+    "commander": "^3.0.0"
+  }
+}
