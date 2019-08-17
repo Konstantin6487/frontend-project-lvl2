@@ -1,7 +1,9 @@
 import fs from 'fs';
+import path from 'path';
 import { union } from 'lodash';
+import parseData from './parsers';
 
-const parse = (data) => JSON.parse(data);
+const getFormat = path.extname;
 const getData = (pathToFile) => fs.readFileSync(pathToFile, 'utf8');
 const makeNode = (key, value, flag = ' ') => ({ key, value, flag });
 
@@ -58,12 +60,14 @@ const render = (ast, deeps = 1) => {
   return `{${mappedAst.join('')}\n${' '.repeat(2 * deeps - 2)}}`;
 };
 
-export default (path1, path2) => {
-  const beforeData = getData(path1);
-  const parsedBeforeData = parse(beforeData);
+export default (pathBeforeData, pathAfterData) => {
+  const formatBeforeData = getFormat(pathBeforeData);
+  const beforeData = getData(pathBeforeData);
+  const parsedBeforeData = parseData(formatBeforeData, beforeData);
 
-  const afterData = getData(path2);
-  const parsedAfterData = parse(afterData);
+  const formatAfterData = getFormat(pathAfterData);
+  const afterData = getData(pathAfterData);
+  const parsedAfterData = parseData(formatAfterData, afterData);
 
   const astDiff = makeAstDiff(parsedBeforeData, parsedAfterData);
   const renderedDiff = render(astDiff);
