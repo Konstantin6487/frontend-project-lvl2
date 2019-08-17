@@ -28,7 +28,7 @@ const makeChildren = (data) => Object
     ? makeInnerNode(key, makeChildren(data[key]))
     : makeLeafNode(key, data[key])));
 
-const changesStatuses = [
+const propChangeStatuses = [
   {
     changeStatusName: 'addProp',
     cond: (before, after, key) => !before.includes(key) && after.includes(key),
@@ -55,7 +55,10 @@ const typesActions = [
   },
   {
     cond: identity,
-    action: (value, value2, key) => [makeLeafNode(key, value2, '+'), makeLeafNode(key, value, '-')],
+    action: (value, value2, key) => [
+      makeLeafNode(key, value2, '+'),
+      makeLeafNode(key, value, '-'),
+    ],
   },
 ];
 
@@ -68,7 +71,7 @@ const makeAstDiff = (before, after = {}) => {
     const valueBefore = before[key];
     const valueAfter = after[key];
     if (valueBefore === valueAfter) {
-      return makeLeafNode(key, after[key]);
+      return makeLeafNode(key, valueAfter);
     }
 
     const changeStatusActions = {
@@ -90,7 +93,7 @@ const makeAstDiff = (before, after = {}) => {
       },
     };
 
-    const getChangeStatus = changesStatuses.find(({ cond }) => cond(
+    const getChangeStatus = propChangeStatuses.find(({ cond }) => cond(
       beforeObjKeys,
       afterObjKeys,
       key,
@@ -105,14 +108,16 @@ const makeAstDiff = (before, after = {}) => {
 };
 
 const render = (ast, deeps = 1) => {
-  const changeStatusActions = ast.flat(Infinity).map((node) => {
-    const currentDeepTab = ' '.repeat(2 * deeps);
-    if (node.getType() === 'leaf') {
-      return `\n${currentDeepTab}${node.flag} ${node.key}: ${node.value}`;
-    }
-    return `\n${currentDeepTab}${node.flag} ${node.key}: ${render(node.children, deeps + 2)}`;
-  });
-  return `{${changeStatusActions.join('')}\n${' '.repeat(2 * deeps - 2)}}`;
+  const mappedAst = ast
+    .flat(Infinity)
+    .map((node) => {
+      const currentDeepTab = ' '.repeat(2 * deeps);
+      if (node.getType() === 'leaf') {
+        return `\n${currentDeepTab}${node.flag} ${node.key}: ${node.value}`;
+      }
+      return `\n${currentDeepTab}${node.flag} ${node.key}: ${render(node.children, deeps + 2)}`;
+    });
+  return `{${mappedAst.join('')}\n${' '.repeat(2 * deeps - 2)}}`;
 };
 
 export default (pathBeforeData, pathAfterData) => {
