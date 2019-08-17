@@ -43,11 +43,7 @@ const changesStatuses = [
   },
 ];
 
-const typesActions = (outerFn) => [
-  {
-    cond: (value, value2) => [value, value2].every(isPlainObject),
-    action: (value, value2, key) => makeInnerNode(key, outerFn(value, value2)),
-  },
+const typesActions = [
   {
     cond: (value, value2) => [value, value2].some(isPlainObject),
     action: (value, value2, key) => [value, value2].map((v) => {
@@ -74,6 +70,7 @@ const makeAstDiff = (before, after = {}) => {
     if (valueBefore === valueAfter) {
       return makeLeafNode(key, after[key]);
     }
+
     const changeStatusActions = {
       addProp: ({ addedPropValue, propKey }) => (isPlainObject(addedPropValue)
         ? makeInnerNode(propKey, makeChildren(addedPropValue), '+')
@@ -82,7 +79,11 @@ const makeAstDiff = (before, after = {}) => {
         ? makeInnerNode(propKey, makeChildren(removedPropValue), '-')
         : makeLeafNode(propKey, removedPropValue, '-')),
       sameProp: ({ removedPropValue, addedPropValue, propKey }) => {
-        const strategy = typesActions(makeAstDiff)
+        if ([removedPropValue, addedPropValue].every(isPlainObject)) {
+          return makeInnerNode(key, makeAstDiff(removedPropValue, addedPropValue));
+        }
+
+        const strategy = typesActions
           .find(({ cond }) => cond(removedPropValue, addedPropValue, propKey));
         const { action } = strategy;
         return action(removedPropValue, addedPropValue, propKey);
