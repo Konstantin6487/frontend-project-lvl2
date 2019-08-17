@@ -1,11 +1,14 @@
 import fs from 'fs';
-import { resolve } from 'path';
+import { resolve, join } from 'path';
 import gendiff from '../src';
 
+const fixturesFolderPath = resolve(__dirname, '__fixtures__');
+const getFilePath = (fileName) => join(fixturesFolderPath, fileName);
+
 test('test1: .json files', () => {
-  const fileBeforePath = resolve(__dirname, '__fixtures__', 'before.json');
-  const fileAfterPath = resolve(__dirname, '__fixtures__', 'after.json');
-  const resultPath = resolve(__dirname, '__fixtures__', 'result');
+  const fileBeforePath = getFilePath('before.json');
+  const fileAfterPath = getFilePath('after.json');
+  const resultPath = getFilePath('result');
 
   const expected = fs.readFileSync(resultPath, 'utf8');
   const result = gendiff(fileBeforePath, fileAfterPath);
@@ -13,9 +16,9 @@ test('test1: .json files', () => {
 });
 
 test('test2: .yml files', () => {
-  const fileBeforePath = resolve(__dirname, '__fixtures__', 'before.yml');
-  const fileAfterPath = resolve(__dirname, '__fixtures__', 'after.yml');
-  const resultPath = resolve(__dirname, '__fixtures__', 'result');
+  const fileBeforePath = getFilePath('before.yml');
+  const fileAfterPath = getFilePath('after.yml');
+  const resultPath = getFilePath('result');
 
   const expected = fs.readFileSync(resultPath, 'utf8');
   const result = gendiff(fileBeforePath, fileAfterPath);
