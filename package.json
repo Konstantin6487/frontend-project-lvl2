@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "NODE_ENV=production babel src --out-dir dist --source-maps inline",
-    "test": "jest",
+    "test": "jest --watch",
     "prepublishOnly": "npm run build"
   },
   "repository": {

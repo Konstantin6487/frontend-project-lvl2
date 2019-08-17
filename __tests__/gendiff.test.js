@@ -14,6 +14,7 @@ describe('Gendiff tests', () => {
     buildFilePathsArr('before.json', 'after.json', 'result'),
     buildFilePathsArr('before.yml', 'after.yml', 'result'),
     buildFilePathsArr('before.ini', 'after.ini', 'result'),
+    buildFilePathsArr('beforeDeep.json', 'afterDeep.json', 'resultDeep'),
   ])(
     'test %#',
     (fileBeforePath, fileAfterPath, fileDiffPath) => {

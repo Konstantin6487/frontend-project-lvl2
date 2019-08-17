@@ -1,63 +1,117 @@
 import fs from 'fs';
 import path from 'path';
-import { union } from 'lodash';
+import { identity, isPlainObject, union } from 'lodash';
 import parseData from './parsers';
 
 const getFormat = path.extname;
 const getData = (pathToFile) => fs.readFileSync(pathToFile, 'utf8');
-const makeNode = (key, value, flag = ' ') => ({ key, value, flag });
 
-const makeAstDiff = (beforeData, afterData) => {
-  const beforeDataKeys = Object.keys(beforeData);
-  const afterDataKeys = Object.keys(afterData);
-  const unionKeys = union(beforeDataKeys, afterDataKeys);
+const makeLeafNode = (key, value, flag = ' ') => ({
+  key,
+  value,
+  flag,
+  type: 'leaf',
+  getType() { return this.type; },
+});
 
-  const keysChangeStatusMap = [
-    {
-      statusName: 'add',
-      cond: (before, after, key) => !before.includes(key) && after.includes(key),
-    },
-    {
-      statusName: 'remove',
-      cond: (before, after, key) => before.includes(key) && !after.includes(key),
-    },
-    {
-      statusName: 'same',
-      cond: (before, after, key) => before.includes(key) && after.includes(key),
-    },
-  ];
+const makeInnerNode = (key, children, flag = ' ') => ({
+  key,
+  children,
+  flag,
+  type: 'inner',
+  getType() { return this.type; },
+});
 
-  return unionKeys.map((key) => {
-    const beforeDataValue = beforeData[key];
-    const afterDataValue = afterData[key];
+const makeChildren = (data) => Object
+  .keys(data)
+  .map((key) => (isPlainObject(data[key])
+    ? makeInnerNode(key, makeChildren(data[key]))
+    : makeLeafNode(key, data[key])));
 
-    if (beforeDataValue === afterDataValue) {
-      return makeNode(key, afterDataValue);
+const changesStatuses = [
+  {
+    changeStatusName: 'addProp',
+    cond: (before, after, key) => !before.includes(key) && after.includes(key),
+  },
+  {
+    changeStatusName: 'removeProp',
+    cond: (before, after, key) => before.includes(key) && !after.includes(key),
+  },
+  {
+    changeStatusName: 'sameProp',
+    cond: (before, after, key) => before.includes(key) && after.includes(key),
+  },
+];
+
+const typesActions = (outerFn) => [
+  {
+    cond: (value, value2) => [value, value2].every(isPlainObject),
+    action: (value, value2, key) => makeInnerNode(key, outerFn(value, value2)),
+  },
+  {
+    cond: (value, value2) => [value, value2].some(isPlainObject),
+    action: (value, value2, key) => [value, value2].map((v) => {
+      const flag = v === value2 ? '+' : '-';
+      return isPlainObject(v)
+        ? makeInnerNode(key, makeChildren(v), flag)
+        : makeLeafNode(key, v, flag);
+    }),
+  },
+  {
+    cond: identity,
+    action: (value, value2, key) => [makeLeafNode(key, value2, '+'), makeLeafNode(key, value, '-')],
+  },
+];
+
+const makeAstDiff = (before, after = {}) => {
+  const beforeObjKeys = Object.keys(before);
+  const afterObjKeys = Object.keys(after);
+  const unionObjKeys = union(beforeObjKeys, afterObjKeys);
+
+  return unionObjKeys.map((key) => {
+    const valueBefore = before[key];
+    const valueAfter = after[key];
+    if (valueBefore === valueAfter) {
+      return makeLeafNode(key, after[key]);
     }
-    const currentKeyChangeStatus = keysChangeStatusMap
-      .find(({ cond }) => cond(beforeDataKeys, afterDataKeys, key));
-    const { statusName } = currentKeyChangeStatus;
-
-    const makeNodeByStatusFunctions = {
-      remove: (node) => makeNode(node.key, node.beforeDataValue, '-'),
-      add: (node) => makeNode(node.key, node.afterDataValue, '+'),
-      same: (node) => [
-        makeNode(node.key, node.afterDataValue, '+'),
-        makeNode(node.key, node.beforeDataValue, '-'),
-      ],
+    const changeStatusActions = {
+      addProp: ({ addedPropValue, propKey }) => (isPlainObject(addedPropValue)
+        ? makeInnerNode(propKey, makeChildren(addedPropValue), '+')
+        : makeLeafNode(propKey, addedPropValue, '+')),
+      removeProp: ({ removedPropValue, propKey }) => (isPlainObject(removedPropValue)
+        ? makeInnerNode(propKey, makeChildren(removedPropValue), '-')
+        : makeLeafNode(propKey, removedPropValue, '-')),
+      sameProp: ({ removedPropValue, addedPropValue, propKey }) => {
+        const strategy = typesActions(makeAstDiff)
+          .find(({ cond }) => cond(removedPropValue, addedPropValue, propKey));
+        const { action } = strategy;
+        return action(removedPropValue, addedPropValue, propKey);
+      },
     };
-    const makeNodeFn = makeNodeByStatusFunctions[statusName];
-    return makeNodeFn({ beforeDataValue, afterDataValue, key });
+
+    const getChangeStatus = changesStatuses.find(({ cond }) => cond(
+      beforeObjKeys,
+      afterObjKeys,
+      key,
+    ));
+
+    const { changeStatusName } = getChangeStatus;
+    const makeDiffNode = changeStatusActions[changeStatusName];
+    return makeDiffNode(
+      { removedPropValue: valueBefore, addedPropValue: valueAfter, propKey: key },
+    );
   });
 };
 
 const render = (ast, deeps = 1) => {
-  const flattenAst = ast.flat(Infinity);
-  const mappedAst = flattenAst.map((node) => {
+  const changeStatusActions = ast.flat(Infinity).map((node) => {
     const currentDeepTab = ' '.repeat(2 * deeps);
-    return `\n${currentDeepTab}${node.flag} ${node.key}: ${node.value}`;
+    if (node.getType() === 'leaf') {
+      return `\n${currentDeepTab}${node.flag} ${node.key}: ${node.value}`;
+    }
+    return `\n${currentDeepTab}${node.flag} ${node.key}: ${render(node.children, deeps + 2)}`;
   });
-  return `{${mappedAst.join('')}\n${' '.repeat(2 * deeps - 2)}}`;
+  return `{${changeStatusActions.join('')}\n${' '.repeat(2 * deeps - 2)}}`;
 };
 
 export default (pathBeforeData, pathAfterData) => {
