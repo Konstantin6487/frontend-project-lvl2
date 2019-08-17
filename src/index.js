@@ -75,21 +75,24 @@ const makeAstDiff = (before, after = {}) => {
     }
 
     const changeStatusActions = {
-      addProp: ({ addedPropValue, propKey }) => (isPlainObject(addedPropValue)
-        ? makeInnerNode(propKey, makeChildren(addedPropValue), '+')
-        : makeLeafNode(propKey, addedPropValue, '+')),
-      removeProp: ({ removedPropValue, propKey }) => (isPlainObject(removedPropValue)
+      addProp: (_, newPropValue, newPropKey) => (isPlainObject(newPropValue)
+        ? makeInnerNode(newPropKey, makeChildren(newPropValue), '+')
+        : makeLeafNode(newPropKey, newPropValue, '+')),
+      removeProp: (removedPropValue, _, propKey) => (isPlainObject(removedPropValue)
         ? makeInnerNode(propKey, makeChildren(removedPropValue), '-')
         : makeLeafNode(propKey, removedPropValue, '-')),
-      sameProp: ({ removedPropValue, addedPropValue, propKey }) => {
-        if ([removedPropValue, addedPropValue].every(isPlainObject)) {
-          return makeInnerNode(key, makeAstDiff(removedPropValue, addedPropValue));
+      sameProp: (removedPropValue, newPropValue, propKey) => {
+        if ([removedPropValue, newPropValue].every(isPlainObject)) {
+          return makeInnerNode(key, makeAstDiff(removedPropValue, newPropValue));
         }
 
-        const strategy = typesActions
-          .find(({ cond }) => cond(removedPropValue, addedPropValue, propKey));
+        const strategy = typesActions.find(({ cond }) => cond(
+          removedPropValue,
+          newPropValue,
+          propKey,
+        ));
         const { action } = strategy;
-        return action(removedPropValue, addedPropValue, propKey);
+        return action(removedPropValue, newPropValue, propKey);
       },
     };
 
@@ -101,9 +104,7 @@ const makeAstDiff = (before, after = {}) => {
 
     const { changeStatusName } = getChangeStatus;
     const makeDiffNode = changeStatusActions[changeStatusName];
-    return makeDiffNode(
-      { removedPropValue: valueBefore, addedPropValue: valueAfter, propKey: key },
-    );
+    return makeDiffNode(valueBefore, valueAfter, key);
   });
 };
 
