@@ -8,16 +8,16 @@ const buildFilePathInDir = (dirPath) => (fileName) => join(dirPath, fileName);
 describe('Gendiff tests', () => {
   const fixturesDirPath = buildAbsDirPath('__fixtures__');
   const buildFilePath = buildFilePathInDir(fixturesDirPath);
-  const buildFilePathsArr = (...fileNames) => [...fileNames].map(buildFilePath);
+  const buildFilePathsArr = (fileNames) => fileNames.map(buildFilePath);
 
   test.each([
-    buildFilePathsArr('before.json', 'after.json', 'result'),
-    buildFilePathsArr('before.yml', 'after.yml', 'result'),
-    buildFilePathsArr('before.ini', 'after.ini', 'result'),
-    buildFilePathsArr('beforeDeep.json', 'afterDeep.json', 'resultDeep'),
-    buildFilePathsArr('beforeDeep.yml', 'afterDeep.yml', 'resultDeep'),
-    buildFilePathsArr('beforeDeep.ini', 'afterDeep.ini', 'resultDeep'),
-  ])(
+    ['before.json', 'after.json', 'result'],
+    ['before.yml', 'after.yml', 'result'],
+    ['before.ini', 'after.ini', 'result'],
+    ['beforeDeep.json', 'afterDeep.json', 'resultDeep'],
+    ['beforeDeep.yml', 'afterDeep.yml', 'resultDeep'],
+    ['beforeDeep.ini', 'afterDeep.ini', 'resultDeep'],
+  ].map(buildFilePathsArr))(
     'test %#',
     (fileBeforePath, fileAfterPath, fileDiffPath) => {
       const result = gendiff(fileBeforePath, fileAfterPath);
