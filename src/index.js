@@ -77,22 +77,19 @@ const makeAstDiff = (before = {}, after = {}) => {
   });
 };
 
-const render = (ast, deeps = 1) => {
-  const flattenCurrentDeeps = ast.flat();
-  const mappedCurrentDeeps = flattenCurrentDeeps
+const render = (ast, deepsLevel = 1) => {
+  const renderIndent = (level, backIndentSize = 0) => `\n${' '.repeat(2 * level + backIndentSize)}`;
+  const stringifyNodeValue = (node, fn) => (node.type === 'leaf'
+    ? node.value
+    : fn(node.children, deepsLevel + 2));
+
+  const mappedCurrentTree = ast
+    .flat()
     .map((node) => {
-      const currentDeepTab = ' '.repeat(2 * deeps);
-      const {
-        changeFlag,
-        key,
-        value,
-        type,
-      } = node;
-      return (type === 'leaf')
-        ? `\n${currentDeepTab}${changeFlag} ${key}: ${value}`
-        : `\n${currentDeepTab}${changeFlag} ${key}: ${render(node.children, deeps + 2)}`;
+      const { changeFlag, key } = node;
+      return `${renderIndent(deepsLevel)}${changeFlag} ${key}: ${stringifyNodeValue(node, render)}`;
     });
-  return `{${mappedCurrentDeeps.join('')}\n${' '.repeat(2 * deeps - 2)}}`;
+  return `{${mappedCurrentTree.join('')}${renderIndent(deepsLevel, -2)}}`;
 };
 
 export default (pathBeforeData, pathAfterData) => {
