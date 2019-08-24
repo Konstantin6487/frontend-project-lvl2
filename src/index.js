@@ -9,59 +9,68 @@ import {
 } from 'lodash';
 import parseData from './parsers';
 
+const FLAG_ADDED_VALUE = '+';
+const FLAG_REMOVED_VALUE = '-';
+const FLAG_SAME_VALUE = ' ';
+
 const getFormat = path.extname;
 const getData = (pathToFile) => fs.readFileSync(pathToFile, 'utf8');
 
-const makeLeafNode = (key, value, changeFlag = ' ') => ({
+const makeLeafNode = (key, value, changeFlag = FLAG_SAME_VALUE) => ({
   key,
   value,
   changeFlag,
   type: 'leaf',
 });
 
-const makeInnerNode = (key, children, changeFlag = ' ') => ({
+const makeInnerNode = (key, children, changeFlag = FLAG_SAME_VALUE) => ({
   key,
   children,
   changeFlag,
   type: 'inner',
 });
 
-const makeNode = (key, value, changeFlag, fn) => (isPlainObject(value)
-  ? makeInnerNode(key, fn(value), changeFlag)
-  : makeLeafNode(key, value, changeFlag));
+const makeNode = (value, value2) => (key, changeFlag, fn) => {
+  if (value && value2) {
+    return makeInnerNode(key, fn(value, value2), changeFlag);
+  }
+  return isPlainObject(value)
+    ? makeInnerNode(key, fn(value), changeFlag)
+    : makeLeafNode(key, value, changeFlag);
+};
 
 const typeChangesActions = [
   {
     type: 'added',
     cond: (before, after, key) => !has(before, key) && has(after, key),
-    action: (before, after, key, fn) => makeNode(key, after[key], isEmpty(before) ? ' ' : '+', fn),
+    action: (before, after, key, fn) => makeNode(after[key])(key, isEmpty(before)
+      ? FLAG_SAME_VALUE
+      : FLAG_ADDED_VALUE, fn),
   },
   {
     type: 'removed',
     cond: (before, after, key) => has(before, key) && !has(after, key),
-    action: (before, after, key, fn) => makeNode(key, before[key], isEmpty(after) ? ' ' : '-', fn),
+    action: (before, after, key, fn) => makeNode(before[key])(key, isEmpty(after)
+      ? FLAG_SAME_VALUE
+      : FLAG_REMOVED_VALUE, fn),
   },
   {
-    type: 'not changed',
+    type: 'nested',
+    cond: (before, after, key) => has(before, key) && has(after, key)
+      && [before[key], after[key]].every(isPlainObject),
+    action: (before, after, key, fn) => makeNode(before[key], after[key])(key, FLAG_SAME_VALUE, fn),
+  },
+  {
+    type: 'unchanged',
     cond: (before, after, key) => before[key] === after[key],
-    action: (_, after, key) => makeLeafNode(key, after[key]),
-  },
-  {
-    type: 'same key',
-    cond: (before, after, key) => [
-      has(before, key),
-      has(after, key),
-      isPlainObject(before[key]),
-      isPlainObject(after[key]),
-    ].every(Boolean),
-    action: (before, after, key, fn) => makeInnerNode(key, fn(before[key], after[key])),
+    action: (_, after, key) => makeNode(after[key])(key),
   },
   {
     type: 'changed',
     cond: () => identity,
     action: (before, after, key, fn) => [
-      makeNode(key, after[key], '+', fn),
-      makeNode(key, before[key], '-', fn),
+      makeNode(after[key])(key, FLAG_ADDED_VALUE, fn),
+      makeNode(before[key])(key, FLAG_REMOVED_VALUE, fn),
     ],
   },
 ];
