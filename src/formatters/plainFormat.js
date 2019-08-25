@@ -1,33 +1,42 @@
 import { get } from 'lodash';
 
+const isChanged = Array.isArray;
+const isRemoved = ({ changeFlag }) => changeFlag === '-';
+const isAdded = ({ changeFlag }) => changeFlag === '+';
+const isUnchanged = ({ changeFlag }) => changeFlag === ' ';
+
 const formatNodeValue = (n) => (n.type === 'inner' ? '[complex value]' : n.value);
 const formatNodePath = (keys) => keys.join('.');
 
-const changesMessages = [
+const typeChangesMessages = [
   {
-    cond: Array.isArray,
+    type: 'changed',
+    cond: isChanged,
     getMessage: ([prevValue, nextValue], keys) => `Property '${formatNodePath(keys)}' was updated. From ${formatNodeValue(nextValue)} to ${formatNodeValue(prevValue)}`,
   },
   {
-    cond: (n) => n.changeFlag === '-',
+    type: 'removed',
+    cond: isRemoved,
     getMessage: (_, keys) => `Property '${formatNodePath(keys)}' was removed`,
   },
   {
-    cond: (n) => n.changeFlag === '+',
+    type: 'added',
+    cond: isAdded,
     getMessage: (n, keys) => `Property '${formatNodePath(keys)}' was added with value: ${formatNodeValue(n)}`,
   },
   {
-    cond: (n) => n.changeFlag === ' ',
+    type: 'unchanged',
+    cond: isUnchanged,
     getMessage: () => '',
   },
 ];
 
 const format = (ast, path = []) => {
-  const getNodeKey = (n) => (Array.isArray(n) ? get(n, '0.key') : get(n, 'key'));
+  const getNodeKey = (n) => (isChanged(n) ? get(n, '0.key') : get(n, 'key'));
 
   const stringifyNodeValue = (node, fn, pathKeys) => {
-    const currentNodeMessage = changesMessages.find(({ cond }) => cond(node));
-    return node.type === 'inner' && node.changeFlag === ' '
+    const currentNodeMessage = typeChangesMessages.find(({ cond }) => cond(node));
+    return node.type === 'inner' && isUnchanged(node)
       ? fn(node.children, pathKeys)
       : currentNodeMessage.getMessage(node, pathKeys);
   };
