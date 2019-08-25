@@ -1,15 +1,12 @@
 import fs from 'fs';
 import { resolve, join } from 'path';
 import gendiff from '../src';
-import getFormatFn from '../src/formatters';
+import { toJson, toPlain } from '../src/formatters';
 
 const buildAbsDirPath = (dirName) => resolve(__dirname, dirName);
 const buildFilePathInDir = (dirPath) => (fileName) => join(dirPath, fileName);
 
 describe('Gendiff tests', () => {
-  const toJson = getFormatFn('json');
-  const toPlain = getFormatFn('plain');
-
   const fixturesDirPath = buildAbsDirPath('__fixtures__');
   const buildFilePath = buildFilePathInDir(fixturesDirPath);
   const buildFilePathsArr = (fileNames) => fileNames.map(buildFilePath);
