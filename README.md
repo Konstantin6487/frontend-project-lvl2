@@ -10,3 +10,8 @@
 ```sh
 $ make install
 ```
+## Run
+
+```sh
+$ make run file={filePath} file2={filePath2}
+```
