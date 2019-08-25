@@ -28,12 +28,8 @@ describe('Gendiff tests', () => {
   );
 
   test.each([
-    ['before.json', 'after.json', 'result.plain'],
-    ['before.yml', 'after.yml', 'result.plain'],
-    ['before.ini', 'after.ini', 'result.plain'],
-    ['beforeDeep.json', 'afterDeep.json', 'resultDeep.plain'],
-    ['beforeDeep.yml', 'afterDeep.yml', 'resultDeep.plain'],
-    ['beforeDeep.ini', 'afterDeep.ini', 'resultDeep.plain'],
+    ['before.json', 'after.yml', 'result.plain'],
+    ['beforeDeep.yml', 'afterDeep.ini', 'resultDeep.plain'],
   ].map(buildFilePathsArr))(
     'Test with format to plain: N%#',
     (fileBeforePath, fileAfterPath, fileDiffPath) => {
