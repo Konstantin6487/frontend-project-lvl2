@@ -23,7 +23,7 @@ const getFormat = (format) => {
 program
   .version('1.0.0')
   .description('Compares two configuration files and shows a difference.')
-  .option('-f, --format [diffjson | plain | json]', 'output json or plain diff')
+  .option('-f, --format [diffjson | plain | json]', 'output diffjson, plain or json diff')
   .arguments('<firstConfig> <secondConfig>')
   .action((arg1, arg2) => {
     const formatFn = program.format ? getFormat(program.format) : getFormat(DEFAULT_FORMAT);

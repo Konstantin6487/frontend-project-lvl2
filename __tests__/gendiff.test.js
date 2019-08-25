@@ -19,7 +19,7 @@ describe('Gendiff tests', () => {
     ['beforeDeep.yml', 'afterDeep.yml', 'resultDeep'],
     ['beforeDeep.ini', 'afterDeep.ini', 'resultDeep'],
   ].map(buildFilePathsArr))(
-    'Test with format to json: N%#',
+    'Test with format to diffjson: N%#',
     (fileBeforePath, fileAfterPath, fileDiffPath) => {
       const result = gendiff(fileBeforePath, fileAfterPath, toDiffJson);
       const expected = fs.readFileSync(fileDiffPath, 'utf8');
