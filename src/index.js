@@ -8,10 +8,11 @@ import {
   isEmpty,
 } from 'lodash';
 import parseData from './parsers';
+import { toJsonFormat } from './formatters';
 
-const FLAG_ADDED_VALUE = '+';
-const FLAG_REMOVED_VALUE = '-';
-const FLAG_SAME_VALUE = ' ';
+export const FLAG_ADDED_VALUE = '+';
+export const FLAG_REMOVED_VALUE = '-';
+export const FLAG_SAME_VALUE = ' ';
 
 const getFormat = path.extname;
 const getData = (pathToFile) => fs.readFileSync(pathToFile, 'utf8');
@@ -86,22 +87,7 @@ const makeAstDiff = (before = {}, after = {}) => {
   });
 };
 
-const render = (ast, deepsLevel = 1) => {
-  const renderIndent = (level, backIndentSize = 0) => `\n${' '.repeat(2 * level + backIndentSize)}`;
-  const stringifyNodeValue = (node, fn) => (node.type === 'leaf'
-    ? node.value
-    : fn(node.children, deepsLevel + 2));
-
-  const mappedCurrentTree = ast
-    .flat()
-    .map((node) => {
-      const { changeFlag, key } = node;
-      return `${renderIndent(deepsLevel)}${changeFlag} ${key}: ${stringifyNodeValue(node, render)}`;
-    });
-  return `{${mappedCurrentTree.join('')}${renderIndent(deepsLevel, -2)}}`;
-};
-
-export default (pathBeforeData, pathAfterData) => {
+export default (pathBeforeData, pathAfterData, format = toJsonFormat) => {
   const formatBeforeData = getFormat(pathBeforeData);
   const beforeData = getData(pathBeforeData);
   const parsedBeforeData = parseData(formatBeforeData, beforeData);
@@ -111,6 +97,6 @@ export default (pathBeforeData, pathAfterData) => {
   const parsedAfterData = parseData(formatAfterData, afterData);
 
   const astDiff = makeAstDiff(parsedBeforeData, parsedAfterData);
-  const renderedDiff = render(astDiff);
+  const renderedDiff = format(astDiff);
   return renderedDiff;
 };
