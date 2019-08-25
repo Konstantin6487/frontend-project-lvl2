@@ -1,4 +1,15 @@
-import toJsonFormat from './jsonFormat';
-import toPlainFormat from './plainFormat';
+import toJson from './jsonFormat';
+import toPlain from './plainFormat';
 
-export { toJsonFormat, toPlainFormat };
+const formatters = {
+  plain: toPlain,
+  json: toJson,
+};
+
+export default (format) => {
+  const formatFn = formatters[format];
+  if (!formatFn) {
+    throw new Error(`unkown format: ${format}`);
+  }
+  return formatFn;
+};

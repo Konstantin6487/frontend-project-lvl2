@@ -1,37 +1,45 @@
+import { get } from 'lodash';
+
+const formatNodeValue = (n) => (n.type === 'inner' ? '[complex value]' : n.value);
+const formatNodePath = (keys) => keys.join('.');
+
+const changesMessages = [
+  {
+    cond: Array.isArray,
+    getMessage: ([prevValue, nextValue], keys) => `Property '${formatNodePath(keys)}' was updated. From ${formatNodeValue(nextValue)} to ${formatNodeValue(prevValue)}`,
+  },
+  {
+    cond: (n) => n.changeFlag === '-',
+    getMessage: (_, keys) => `Property '${formatNodePath(keys)}' was removed`,
+  },
+  {
+    cond: (n) => n.changeFlag === '+',
+    getMessage: (n, keys) => `Property '${formatNodePath(keys)}' was added with value: ${formatNodeValue(n)}`,
+  },
+  {
+    cond: (n) => n.changeFlag === ' ',
+    getMessage: () => '',
+  },
+];
+
 const format = (ast, path = []) => {
+  const getNodeKey = (n) => (Array.isArray(n) ? get(n, '0.key') : get(n, 'key'));
+
   const stringifyNodeValue = (node, fn, pathKeys) => {
-    const formatNodeValue = (n) => (n.type === 'inner' ? '[complex value]' : n.value);
-    const formatNodePath = (keys) => keys.join('.');
-    const flagActions = [
-      {
-        flag: Array.isArray,
-        action: (n) => `Property '${formatNodePath(pathKeys)}' was updated. From ${formatNodeValue(n[1])} to ${formatNodeValue(n[0])}`,
-      },
-      {
-        flag: (n) => n.changeFlag === '-',
-        action: () => `Property '${formatNodePath(pathKeys)}' was removed`,
-      },
-      {
-        flag: (n) => n.changeFlag === '+',
-        action: (n) => `Property '${formatNodePath(pathKeys)}' was added with value: ${formatNodeValue(n)}`,
-      },
-      {
-        flag: (n) => n.changeFlag === ' ',
-        action: () => '',
-      },
-    ];
-    const currentAction = flagActions.find(({ flag }) => flag(node));
+    const currentNodeMessage = changesMessages.find(({ cond }) => cond(node));
     return node.type === 'inner' && node.changeFlag === ' '
       ? fn(node.children, pathKeys)
-      : currentAction.action(node);
+      : currentNodeMessage.getMessage(node, pathKeys);
   };
 
-  const mappedCurrentTree = ast
-    .map((node) => `${stringifyNodeValue(node, format, [
-      ...path,
-      Array.isArray(node) ? node[0].key : node.key,
-    ])}`);
-  return mappedCurrentTree.filter((n) => n).join('\n');
+  return ast
+    .map((node) => stringifyNodeValue(
+      node,
+      format,
+      path.concat(getNodeKey(node)),
+    ))
+    .filter(Boolean)
+    .join('\n');
 };
 
 export default format;

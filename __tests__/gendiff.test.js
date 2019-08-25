@@ -1,12 +1,15 @@
 import fs from 'fs';
 import { resolve, join } from 'path';
 import gendiff from '../src';
-import { toPlainFormat } from '../src/formatters';
+import getFormatFn from '../src/formatters';
 
 const buildAbsDirPath = (dirName) => resolve(__dirname, dirName);
 const buildFilePathInDir = (dirPath) => (fileName) => join(dirPath, fileName);
 
 describe('Gendiff tests', () => {
+  const toJson = getFormatFn('json');
+  const toPlain = getFormatFn('plain');
+
   const fixturesDirPath = buildAbsDirPath('__fixtures__');
   const buildFilePath = buildFilePathInDir(fixturesDirPath);
   const buildFilePathsArr = (fileNames) => fileNames.map(buildFilePath);
@@ -19,9 +22,9 @@ describe('Gendiff tests', () => {
     ['beforeDeep.yml', 'afterDeep.yml', 'resultDeep'],
     ['beforeDeep.ini', 'afterDeep.ini', 'resultDeep'],
   ].map(buildFilePathsArr))(
-    'Test with json format: %#',
+    'Test with format to json: N%#',
     (fileBeforePath, fileAfterPath, fileDiffPath) => {
-      const result = gendiff(fileBeforePath, fileAfterPath);
+      const result = gendiff(fileBeforePath, fileAfterPath, toJson);
       const expected = fs.readFileSync(fileDiffPath, 'utf8');
       expect(result).toBe(expected);
     },
@@ -35,9 +38,9 @@ describe('Gendiff tests', () => {
     ['beforeDeep.yml', 'afterDeep.yml', 'resultDeep.plain'],
     ['beforeDeep.ini', 'afterDeep.ini', 'resultDeep.plain'],
   ].map(buildFilePathsArr))(
-    'Test with plain format: %#',
+    'Test with format to plain: N%#',
     (fileBeforePath, fileAfterPath, fileDiffPath) => {
-      const result = gendiff(fileBeforePath, fileAfterPath, toPlainFormat);
+      const result = gendiff(fileBeforePath, fileAfterPath, toPlain);
       const expected = fs.readFileSync(fileDiffPath, 'utf8');
       expect(result).toBe(expected);
     },

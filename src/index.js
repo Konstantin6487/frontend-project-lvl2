@@ -8,11 +8,10 @@ import {
   isEmpty,
 } from 'lodash';
 import parseData from './parsers';
-import { toJsonFormat } from './formatters';
 
-export const FLAG_ADDED_VALUE = '+';
-export const FLAG_REMOVED_VALUE = '-';
-export const FLAG_SAME_VALUE = ' ';
+const FLAG_ADDED_VALUE = '+';
+const FLAG_REMOVED_VALUE = '-';
+const FLAG_SAME_VALUE = ' ';
 
 const getFormat = path.extname;
 const getData = (pathToFile) => fs.readFileSync(pathToFile, 'utf8');
@@ -87,7 +86,7 @@ const makeAstDiff = (before = {}, after = {}) => {
   });
 };
 
-export default (pathBeforeData, pathAfterData, format = toJsonFormat) => {
+export default (pathBeforeData, pathAfterData, format) => {
   const formatBeforeData = getFormat(pathBeforeData);
   const beforeData = getData(pathBeforeData);
   const parsedBeforeData = parseData(formatBeforeData, beforeData);
