@@ -2,13 +2,14 @@
 
 import program from 'commander';
 import genDiff from '..';
-import { toJson, toPlain } from '../formatters';
+import { toDiffJson, toPlain, toJson } from '../formatters';
 
-const DEFAULT_FORMAT = 'json';
+const DEFAULT_FORMAT = 'diffjson';
 
 const formatters = {
-  json: toJson,
+  diffjson: toDiffJson,
   plain: toPlain,
+  json: toJson,
 };
 
 const getFormat = (format) => {
@@ -22,7 +23,7 @@ const getFormat = (format) => {
 program
   .version('1.0.0')
   .description('Compares two configuration files and shows a difference.')
-  .option('-f, --format [json | plain]', 'output json or plain diff')
+  .option('-f, --format [diffjson | plain | json]', 'output json or plain diff')
   .arguments('<firstConfig> <secondConfig>')
   .action((arg1, arg2) => {
     const formatFn = program.format ? getFormat(program.format) : getFormat(DEFAULT_FORMAT);

@@ -1,4 +1,5 @@
-import toJson from './jsonFormat';
+import toDiffJson from './diffJsonFormat';
 import toPlain from './plainFormat';
+import toJson from './jsonFormat';
 
-export { toJson, toPlain };
+export { toDiffJson, toPlain, toJson };
