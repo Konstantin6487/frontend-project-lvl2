@@ -8,16 +8,16 @@ const parsers = {
   '.ini': ini.parse,
 };
 
-const getParser = (format) => (data) => {
-  const parse = parsers[format];
+const getParser = (formatType) => (data) => {
+  const parse = parsers[formatType];
   if (!parse) {
-    throw new Error(`unkown format: ${format}`);
+    throw new Error(`unkown format: ${formatType}`);
   }
   return parse(data);
 };
 
-export default (format, data) => {
-  const parse = getParser(format);
+export default (formatType, data) => {
+  const parse = getParser(formatType);
   const config = parse(data);
   return config;
 };

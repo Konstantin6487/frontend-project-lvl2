@@ -8,6 +8,7 @@ import {
   isEmpty,
 } from 'lodash';
 import parseData from './parsers';
+import getRenderFormat from './formatters';
 
 const FLAG_ADDED_VALUE = '+';
 const FLAG_REMOVED_VALUE = '-';
@@ -86,7 +87,7 @@ const makeAstDiff = (before = {}, after = {}) => {
   });
 };
 
-export default (pathBeforeData, pathAfterData, format) => {
+export default (pathBeforeData, pathAfterData, formatType = 'diffjson') => {
   const formatBeforeData = getFormat(pathBeforeData);
   const beforeData = getData(pathBeforeData);
   const parsedBeforeData = parseData(formatBeforeData, beforeData);
@@ -96,6 +97,7 @@ export default (pathBeforeData, pathAfterData, format) => {
   const parsedAfterData = parseData(formatAfterData, afterData);
 
   const astDiff = makeAstDiff(parsedBeforeData, parsedAfterData);
+  const format = getRenderFormat(formatType);
   const renderedDiff = format(astDiff);
   return renderedDiff;
 };
