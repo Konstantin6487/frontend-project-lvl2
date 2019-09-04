@@ -1,5 +1,5 @@
-import fs from 'fs';
-import { resolve, join, extname } from 'path';
+import { resolve, join } from 'path';
+import { getFormat, getData } from '../src/helpers';
 import gendiff from '../src';
 
 const testCasesFiles = [
@@ -8,7 +8,6 @@ const testCasesFiles = [
   ['before.ini', 'after.ini', 'result.json'],
 ];
 
-const getFormatType = (filePath) => extname(filePath).slice(1);
 const buildAbsDirPath = (dirName) => resolve(__dirname, dirName);
 const buildFilePathInDir = (dirPath) => (fileName) => join(dirPath, fileName);
 
@@ -20,9 +19,9 @@ describe('Gendiff tests', () => {
   test.each(testCasesFiles.map(buildFilePaths))(
     "generate correct file's diff N%#",
     (beforeFilePath, afterFilePath, resultFilePath) => {
-      const diffFormat = getFormatType(resultFilePath);
+      const diffFormat = getFormat(resultFilePath);
       const result = gendiff(beforeFilePath, afterFilePath, diffFormat);
-      const expected = fs.readFileSync(resultFilePath, 'utf8');
+      const expected = getData(resultFilePath);
 
       expect(result).toBe(expected);
     },

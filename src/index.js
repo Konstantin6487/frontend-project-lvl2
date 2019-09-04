@@ -1,5 +1,3 @@
-import fs from 'fs';
-import path from 'path';
 import {
   has,
   identity,
@@ -7,15 +5,13 @@ import {
   union,
   isEmpty,
 } from 'lodash';
+import { getFormat, getData } from './helpers';
 import parseData from './parsers';
 import getRenderFormat from './formatters';
 
 const FLAG_ADDED_VALUE = '+';
 const FLAG_REMOVED_VALUE = '-';
 const FLAG_SAME_VALUE = ' ';
-
-const getFormat = path.extname;
-const getData = (pathToFile) => fs.readFileSync(pathToFile, 'utf8');
 
 const makeLeafNode = (key, value, changeFlag = FLAG_SAME_VALUE) => ({
   key,
