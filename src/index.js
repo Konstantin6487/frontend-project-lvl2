@@ -43,60 +43,61 @@ const makeNode = (value, value2) => (key, changeFlag, fn) => {
 const typeChangesActions = [
   {
     type: 'added',
-    cond: (before, after, key) => !has(before, key) && has(after, key),
-    action: (before, after, key, fn) => makeNode(after[key])(key, isEmpty(before)
+    cond: (original, newest, key) => !has(original, key) && has(newest, key),
+    action: (original, newest, key, fn) => makeNode(newest[key])(key, isEmpty(original)
       ? FLAG_SAME_VALUE
       : FLAG_ADDED_VALUE, fn),
   },
   {
     type: 'removed',
-    cond: (before, after, key) => has(before, key) && !has(after, key),
-    action: (before, after, key, fn) => makeNode(before[key])(key, isEmpty(after)
+    cond: (original, newest, key) => has(original, key) && !has(newest, key),
+    action: (original, newest, key, fn) => makeNode(original[key])(key, isEmpty(newest)
       ? FLAG_SAME_VALUE
       : FLAG_REMOVED_VALUE, fn),
   },
   {
     type: 'nested',
-    cond: (before, after, key) => has(before, key) && has(after, key)
-      && [before[key], after[key]].every(isPlainObject),
-    action: (before, after, key, fn) => makeNode(before[key], after[key])(key, FLAG_SAME_VALUE, fn),
+    cond: (original, newest, key) => has(original, key) && has(newest, key)
+      && [original[key], newest[key]].every(isPlainObject),
+    action: (original, newest, key, fn) => makeNode(original[key], newest[key])(key, FLAG_SAME_VALUE, fn),
   },
   {
     type: 'unchanged',
-    cond: (before, after, key) => before[key] === after[key],
-    action: (_, after, key) => makeNode(after[key])(key),
+    cond: (original, newest, key) => original[key] === newest[key],
+    action: (_, newest, key) => makeNode(newest[key])(key),
   },
   {
     type: 'changed',
     cond: () => identity,
-    action: (before, after, key, fn) => [
-      makeNode(after[key])(key, FLAG_ADDED_VALUE, fn),
-      makeNode(before[key])(key, FLAG_REMOVED_VALUE, fn),
+    action: (original, newest, key, fn) => [
+      makeNode(newest[key])(key, FLAG_ADDED_VALUE, fn),
+      makeNode(original[key])(key, FLAG_REMOVED_VALUE, fn),
     ],
   },
 ];
 
-const makeAstDiff = (before = {}, after = {}) => {
-  const beforeObjKeys = Object.keys(before);
-  const afterObjKeys = Object.keys(after);
-  const unionObjKeys = union(beforeObjKeys, afterObjKeys);
-  return unionObjKeys.map((key) => {
-    const currentTypeChangeData = typeChangesActions.find(({ cond }) => cond(before, after, key));
+const makeAstDiff = (originalData = {}, newData = {}) => {
+  const originalDataKeys = Object.keys(originalData);
+  const newDataKeys = Object.keys(newData);
+  const unionDataKeys = union(originalDataKeys, newDataKeys);
+  return unionDataKeys.map((key) => {
+    const currentTypeChangeData = typeChangesActions
+      .find(({ cond }) => cond(originalData, newData, key));
     const { action } = currentTypeChangeData;
-    return action(before, after, key, makeAstDiff);
+    return action(originalData, newData, key, makeAstDiff);
   });
 };
 
-export default (pathBeforeData, pathAfterData, formatType = 'diffjson') => {
-  const formatBeforeData = getFormat(pathBeforeData);
-  const beforeData = getData(pathBeforeData);
-  const parsedBeforeData = parseData(formatBeforeData, beforeData);
+export default (originalFilePath, newFilePath, formatType = 'diffjson') => {
+  const originalFileFormat = getFormat(originalFilePath);
+  const originalFileData = getData(originalFilePath);
+  const parsedOriginalFile = parseData(originalFileFormat, originalFileData);
 
-  const formatAfterData = getFormat(pathAfterData);
-  const afterData = getData(pathAfterData);
-  const parsedAfterData = parseData(formatAfterData, afterData);
+  const newFileFormat = getFormat(newFilePath);
+  const newFileData = getData(newFilePath);
+  const parsedNewFile = parseData(newFileFormat, newFileData);
 
-  const astDiff = makeAstDiff(parsedBeforeData, parsedAfterData);
+  const astDiff = makeAstDiff(parsedOriginalFile, parsedNewFile);
   const format = getRenderFormat(formatType);
   const renderedDiff = format(astDiff);
   return renderedDiff;
