@@ -3,9 +3,9 @@ import { getFormat, getData } from '../src/helpers';
 import gendiff from '../src';
 
 const testCasesFiles = [
-  ['before.json', 'after.json', 'result.diffjson'],
-  ['before.yml', 'after.yml', 'result.plain'],
-  ['before.ini', 'after.ini', 'result.json'],
+  ['original.json', 'newest.json', 'diff.diffjson'],
+  ['original.yml', 'newest.yml', 'diff.plain'],
+  ['original.ini', 'newest.ini', 'diff.json'],
 ];
 
 const buildAbsDirPath = (dirName) => resolve(__dirname, dirName);
@@ -18,10 +18,10 @@ describe('Gendiff tests', () => {
 
   test.each(testCasesFiles.map(buildFilePaths))(
     "generate correct file's diff N%#",
-    (beforeFilePath, afterFilePath, resultFilePath) => {
-      const diffFormat = getFormat(resultFilePath);
-      const result = gendiff(beforeFilePath, afterFilePath, diffFormat);
-      const expected = getData(resultFilePath);
+    (originalFilePath, newFilePath, diffFilePath) => {
+      const diffFormat = getFormat(diffFilePath);
+      const result = gendiff(originalFilePath, newFilePath, diffFormat);
+      const expected = getData(diffFilePath);
 
       expect(result).toBe(expected);
     },
