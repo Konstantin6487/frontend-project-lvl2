@@ -9,9 +9,9 @@ const formatters = {
 };
 
 export default (formatType) => {
-  const formatFn = formatters[formatType];
-  if (!formatFn) {
+  const format = formatters[formatType];
+  if (!format) {
     throw new Error(`unknown format: ${formatType}`);
   }
-  return formatFn;
+  return format;
 };
