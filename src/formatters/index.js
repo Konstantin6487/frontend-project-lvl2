@@ -11,7 +11,7 @@ const formatters = {
 export default (formatType) => {
   const formatFn = formatters[formatType];
   if (!formatFn) {
-    throw new Error(`unkown format: ${formatType}`);
+    throw new Error(`unknown format: ${formatType}`);
   }
   return formatFn;
 };

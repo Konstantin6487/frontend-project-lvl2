@@ -4,7 +4,7 @@ import {
   isPlainObject,
   union,
 } from 'lodash';
-import { getFormat, getData } from './helpers';
+import { getExtName, getData } from './helpers';
 import parseData from './parsers';
 import getRenderFormat from './formatters';
 
@@ -78,13 +78,13 @@ const makeAstDiff = (originalData = {}, newData = {}) => {
 };
 
 export default (originalFilePath, newFilePath, formatType = 'diffjson') => {
-  const originalFileFormat = getFormat(originalFilePath);
+  const originalFileExt = getExtName(originalFilePath);
   const originalFileData = getData(originalFilePath);
-  const parsedOriginalFile = parseData(originalFileFormat, originalFileData);
+  const parsedOriginalFile = parseData(originalFileExt, originalFileData);
 
-  const newFileFormat = getFormat(newFilePath);
+  const newFileExt = getExtName(newFilePath);
   const newFileData = getData(newFilePath);
-  const parsedNewFile = parseData(newFileFormat, newFileData);
+  const parsedNewFile = parseData(newFileExt, newFileData);
 
   const astDiff = makeAstDiff(parsedOriginalFile, parsedNewFile);
   const format = getRenderFormat(formatType);

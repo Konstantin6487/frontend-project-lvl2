@@ -1,5 +1,5 @@
 import { resolve, join } from 'path';
-import { getFormat, getData } from '../src/helpers';
+import { getExtName, getData } from '../src/helpers';
 import gendiff from '../src';
 
 const testCasesFiles = [
@@ -19,7 +19,7 @@ describe('Gendiff tests', () => {
   test.each(testCasesFiles.map(buildFilePaths))(
     "generate correct file's diff N%#",
     (originalFilePath, newFilePath, diffFilePath) => {
-      const diffFormat = getFormat(diffFilePath);
+      const diffFormat = getExtName(diffFilePath);
       const result = gendiff(originalFilePath, newFilePath, diffFormat);
       const expected = getData(diffFilePath);
 
