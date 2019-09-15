@@ -26,11 +26,11 @@ const stringifyNodeValue = (nodeValue, prevIndentSize) => {
   return nodeValue;
 };
 
-const stringifyNode = (nodeKey, nodeValue, depth, delimeter = ' ') => {
+const stringifyNode = (nodeKey, nodeValue, depth, mark = ' ') => {
   const prevIndentSize = depth * baseIndentSize;
   const indent = stringifyNodeIndent(prevIndentSize - 2);
   const value = stringifyNodeValue(nodeValue, prevIndentSize);
-  return `${indent}${delimeter} ${nodeKey}: ${value}`;
+  return `${indent}${mark} ${nodeKey}: ${value}`;
 };
 
 const typesRenders = {
@@ -38,8 +38,8 @@ const typesRenders = {
   removed: ({ key, value }, depth) => stringifyNode(key, value, depth, '-'),
   nested: ({ key, children }, depth, fn) => stringifyNode(key, fn(children, depth + 1), depth),
   unchanged: ({ key, value }, depth) => stringifyNode(key, value, depth),
-  changed: ({ key, newValue, originalValue }, depth) => (
-    `${stringifyNode(key, newValue, depth, '+')}\n${stringifyNode(key, originalValue, depth, '-')}`
+  changed: ({ key, originalValue, newValue }, depth) => (
+    `${typesRenders.added({ key, value: newValue }, depth)}\n${typesRenders.removed({ key, value: originalValue }, depth)}`
   ),
 };
 
