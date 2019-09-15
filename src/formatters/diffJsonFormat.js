@@ -6,9 +6,9 @@ const stringifyNodeIndent = (indentSize) => ' '.repeat(indentSize);
 
 const stringifyNodeValue = (nodeValue, prevIndentSize) => {
   if (isPlainObject(nodeValue)) {
-    const startBracket = '{\n';
+    const start = '{\n';
     const stringifiedIndent = stringifyNodeIndent(prevIndentSize);
-    const endBracket = `${stringifiedIndent}}`;
+    const end = `${stringifiedIndent}}`;
 
     const stringifiedValue = Object
       .keys(nodeValue)
@@ -21,7 +21,7 @@ const stringifyNodeValue = (nodeValue, prevIndentSize) => {
       })
       .join('');
 
-    return `${startBracket}${stringifiedValue}${endBracket}`;
+    return `${start}${stringifiedValue}${end}`;
   }
   return nodeValue;
 };
@@ -50,11 +50,11 @@ const format = (ast, depth = 1) => {
       return `${renderType(node, depth, format)}\n`;
     })
     .join('');
-  const startBracket = '{\n';
+  const start = '{\n';
   const innerIndentSize = depth === 1 ? 0 : (depth - 1) * baseIndentSize;
-  const endBracket = `${stringifyNodeIndent(innerIndentSize)}}`;
+  const end = `${stringifyNodeIndent(innerIndentSize)}}`;
 
-  return `${startBracket}${renderedTypes}${endBracket}`;
+  return `${start}${renderedTypes}${end}`;
 };
 
 export default format;
