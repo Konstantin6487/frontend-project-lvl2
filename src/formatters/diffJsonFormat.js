@@ -1,6 +1,6 @@
 import { isPlainObject } from 'lodash';
 
-const defaultIndentSize = 4;
+const baseIndentSize = 4;
 
 const stringifyNodeIndent = (indentSize) => ' '.repeat(indentSize);
 
@@ -13,7 +13,7 @@ const stringifyNodeValue = (nodeValue, prevIndentSize) => {
     const stringifiedValue = Object
       .keys(nodeValue)
       .map((key) => {
-        const innerIndentSize = prevIndentSize + defaultIndentSize;
+        const innerIndentSize = prevIndentSize + baseIndentSize;
         const stringifiedInnerIndent = stringifyNodeIndent(innerIndentSize);
         const value = nodeValue[key];
         const stringified = stringifyNodeValue(value, innerIndentSize);
@@ -26,25 +26,20 @@ const stringifyNodeValue = (nodeValue, prevIndentSize) => {
   return nodeValue;
 };
 
+const stringifyNode = (nodeKey, nodeValue, depth, delimeter = ' ') => {
+  const prevIndentSize = depth * baseIndentSize;
+  const indent = stringifyNodeIndent(prevIndentSize - 2);
+  const value = stringifyNodeValue(nodeValue, prevIndentSize);
+  return `${indent}${delimeter} ${nodeKey}: ${value}`;
+};
+
 const typesRenders = {
-  added: ({ key, value }, depth) => {
-    const prevIndentSize = depth * defaultIndentSize;
-    return `${stringifyNodeIndent(prevIndentSize - 2)}+ ${key}: ${stringifyNodeValue(value, prevIndentSize)}`;
-  },
-  removed: ({ key, value }, depth) => {
-    const prevIndentSize = depth * defaultIndentSize;
-    return `${stringifyNodeIndent(prevIndentSize - 2)}- ${key}: ${stringifyNodeValue(value, prevIndentSize)}`;
-  },
-  nested: ({ key, children }, depth, fn) => {
-    const prevIndentSize = depth * defaultIndentSize;
-    return `${stringifyNodeIndent(prevIndentSize)}${key}: ${fn(children, depth + 1)}`;
-  },
-  unchanged: ({ key, value }, depth) => {
-    const prevIndentSize = depth * defaultIndentSize;
-    return `${stringifyNodeIndent(prevIndentSize)}${key}: ${stringifyNodeValue(value, prevIndentSize)}`;
-  },
+  added: ({ key, value }, depth) => stringifyNode(key, value, depth, '+'),
+  removed: ({ key, value }, depth) => stringifyNode(key, value, depth, '-'),
+  nested: ({ key, children }, depth, fn) => stringifyNode(key, fn(children, depth + 1), depth),
+  unchanged: ({ key, value }, depth) => stringifyNode(key, value, depth),
   changed: ({ key, newValue, originalValue }, depth) => (
-    `${typesRenders.added({ key, value: newValue }, depth)}\n${typesRenders.removed({ key, value: originalValue }, depth)}`
+    `${stringifyNode(key, newValue, depth, '+')}\n${stringifyNode(key, originalValue, depth, '-')}`
   ),
 };
 
@@ -56,7 +51,7 @@ const format = (ast, depth = 1) => {
     })
     .join('');
   const startBracket = '{\n';
-  const innerIndentSize = depth === 1 ? 0 : (depth - 1) * defaultIndentSize;
+  const innerIndentSize = depth === 1 ? 0 : (depth - 1) * baseIndentSize;
   const endBracket = `${stringifyNodeIndent(innerIndentSize)}}`;
 
   return `${startBracket}${renderedTypes}${endBracket}`;
