@@ -77,7 +77,7 @@ const makeAstDiff = (originalData = {}, newData = {}) => {
   });
 };
 
-export default (originalFilePath, newFilePath, formatType = 'json') => {
+export default (originalFilePath, newFilePath, formatType = 'diffjson') => {
   const originalFileFormat = getFormat(originalFilePath);
   const originalFileData = getData(originalFilePath);
   const parsedOriginalFile = parseData(originalFileFormat, originalFileData);
@@ -87,8 +87,6 @@ export default (originalFilePath, newFilePath, formatType = 'json') => {
   const parsedNewFile = parseData(newFileFormat, newFileData);
 
   const astDiff = makeAstDiff(parsedOriginalFile, parsedNewFile);
-  console.log(JSON.stringify(astDiff));
-  console.log(astDiff);
   const format = getRenderFormat(formatType);
   const renderedDiff = format(astDiff);
   return renderedDiff;

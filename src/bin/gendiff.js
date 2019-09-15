@@ -8,7 +8,7 @@ program
   .description('Compares two configuration files and shows a difference.')
   .option('-f, --format [diffjson | plain | json]', 'output diffjson, plain or json diff')
   .arguments('<originalConfig> <newConfig>')
-  .action((original, newest) => {
-    console.log(genDiff(original, newest, program.format));
+  .action((originalConfigPath, newConfigPath) => {
+    console.log(genDiff(originalConfigPath, newConfigPath, program.format));
   })
   .parse(process.argv);
