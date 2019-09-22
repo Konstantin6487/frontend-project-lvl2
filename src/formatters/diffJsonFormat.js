@@ -8,7 +8,7 @@ const stringifyValue = (nodeValue, prevDepth) => {
   }
 
   const currDepth = prevDepth + 1;
-  const endBracket = ' '.repeat(currDepth * baseIndentSize);
+  const endBracketIndent = ' '.repeat(currDepth * baseIndentSize);
 
   const stringified = Object
     .keys(nodeValue)
@@ -21,10 +21,10 @@ const stringifyValue = (nodeValue, prevDepth) => {
     })
     .join('\n');
 
-  return `{\n${stringified}\n${endBracket}}`;
+  return `{\n${stringified}\n${endBracketIndent}}`;
 };
 
-const prefixTypes = {
+const typesIndents = {
   added: '  + ',
   removed: '  - ',
   nested: ' '.repeat(baseIndentSize),
@@ -34,22 +34,24 @@ const prefixTypes = {
 const nodeTypesActions = [
   {
     check: (nodeType) => ['added', 'removed', 'unchanged'].some((type) => type === nodeType),
-    action: ({ type, key, value }, depth) => `${prefixTypes[type]}${key}: ${stringifyValue(value, depth)}`,
+    action: ({ type, key, value }, depth) => `${typesIndents[type]}${key}: ${stringifyValue(value, depth)}`,
   },
   {
     check: (nodeType) => nodeType === 'nested',
     action: ({ type, key, children }, depth, fn) => {
-      const endBracket = ' '.repeat(depth === 0 ? baseIndentSize : (depth * baseIndentSize) + baseIndentSize);
+      const endBracketIndent = ' '.repeat(depth === 0
+        ? baseIndentSize
+        : (depth * baseIndentSize) + baseIndentSize);
       return (
-        `${prefixTypes[type]}${key}: {\n${fn(children, depth + 1)}\n${endBracket}}`
+        `${typesIndents[type]}${key}: {\n${fn(children, depth + 1)}\n${endBracketIndent}}`
       );
     },
   },
   {
     check: (nodeType) => nodeType === 'changed',
     action: ({ key, originalValue, newValue }, depth) => [
-      `${prefixTypes.added}${key}: ${stringifyValue(newValue, depth)}`,
-      `${prefixTypes.removed}${key}: ${stringifyValue(originalValue, depth)}`,
+      `${typesIndents.added}${key}: ${stringifyValue(newValue, depth)}`,
+      `${typesIndents.removed}${key}: ${stringifyValue(originalValue, depth)}`,
     ],
   },
 ];
@@ -61,8 +63,11 @@ export default (ast) => {
       const { action } = checkedCurrentNodeType;
       return action(node, depth, inner);
     })
-    .flat(Infinity)
-    .map((node) => `${' '.repeat(depth === 0 ? 0 : depth * baseIndentSize)}${node}`)
+    .flat()
+    .map((node) => {
+      const indent = ' '.repeat(depth === 0 ? 0 : depth * baseIndentSize);
+      return `${indent}${node}`;
+    })
     .join('\n');
   const strinfified = inner(ast);
   return `{\n${strinfified}\n}`;
