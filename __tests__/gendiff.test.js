@@ -1,15 +1,17 @@
-import { resolve, join } from 'path';
-import { getExtName, getData } from '../src/helpers';
+import { extname, join, resolve } from 'path';
+import fs from 'fs';
 import gendiff from '../src';
+
+const buildAbsDirPath = (dirName) => resolve(__dirname, dirName);
+const buildFilePathInDir = (dirPath) => (fileName) => join(dirPath, fileName);
+const getFormat = (path) => extname(path).slice(1);
+const getData = (path) => fs.readFileSync(path, 'utf8');
 
 const testCasesFiles = [
   ['original.json', 'newest.json', 'diff.diffjson'],
   ['original.yml', 'newest.yml', 'diff.plain'],
   ['original.ini', 'newest.ini', 'diff.json'],
 ];
-
-const buildAbsDirPath = (dirName) => resolve(__dirname, dirName);
-const buildFilePathInDir = (dirPath) => (fileName) => join(dirPath, fileName);
 
 describe('Gendiff tests', () => {
   const fixturesDirPath = buildAbsDirPath('__fixtures__');
@@ -19,7 +21,7 @@ describe('Gendiff tests', () => {
   test.each(testCasesFiles.map(buildFilePaths))(
     "generate correct file's diff N%#",
     (originalFilePath, newFilePath, diffFilePath) => {
-      const diffFormat = getExtName(diffFilePath);
+      const diffFormat = getFormat(diffFilePath);
       const result = gendiff(originalFilePath, newFilePath, diffFormat);
       const expected = getData(diffFilePath);
 

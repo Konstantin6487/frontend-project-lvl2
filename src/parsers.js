@@ -8,16 +8,16 @@ const parsers = {
   ini: ini.parse,
 };
 
-const getParser = (fileExt) => {
-  const parse = parsers[fileExt];
+const getParser = (dataType) => {
+  const parse = parsers[dataType];
   if (!parse) {
-    throw new Error(`unknown file extension: ${fileExt}`);
+    throw new Error(`unknown data type: ${dataType}`);
   }
   return parse;
 };
 
-export default (fileExt, data) => {
-  const parse = getParser(fileExt);
+export default (dataType, data) => {
+  const parse = getParser(dataType);
   const parsed = parse(data);
   return parsed;
 };

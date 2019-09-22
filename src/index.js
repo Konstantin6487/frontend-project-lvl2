@@ -13,19 +13,15 @@ const makeDiffNode = (type) => (originalData, newData, key, fn) => {
   const originalValue = originalData[key];
 
   const typesActions = {
-    added: () => ({ type, value: newValue, key }),
-    removed: () => ({ type, value: originalValue, key }),
-    nested: () => ({ type, children: fn(originalValue, newValue), key }),
-    changed: () => ({
-      type,
-      newValue,
-      originalValue,
-      key,
-    }),
-    unchanged: () => ({ type, value: originalValue, key }),
+    added: () => ({ value: newValue }),
+    removed: () => ({ value: originalValue }),
+    nested: () => ({ children: fn(originalValue, newValue) }),
+    changed: () => ({ newValue, originalValue }),
+    unchanged: () => ({ value: originalValue }),
   };
-  const makeTypedNode = typesActions[type];
-  return makeTypedNode();
+  const makeNodeContent = typesActions[type];
+  const content = makeNodeContent();
+  return ({ type, ...content, key });
 };
 
 const nodeTypesActions = [
