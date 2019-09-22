@@ -1,4 +1,4 @@
-import { isPlainObject } from 'lodash';
+import { isEmpty, isPlainObject } from 'lodash';
 
 const baseIndentSize = 4;
 
@@ -7,16 +7,14 @@ const stringifyValue = (nodeValue, prevDepth) => {
     return nodeValue;
   }
 
-  const currDepth = prevDepth + 1;
-  const endBracketIndent = ' '.repeat(currDepth * baseIndentSize);
-
+  const endBracketIndent = ' '.repeat(prevDepth * baseIndentSize);
   const stringified = Object
     .keys(nodeValue)
     .map((key) => {
-      const prefix = ' '.repeat((currDepth * baseIndentSize) + baseIndentSize);
+      const prefix = ' '.repeat((prevDepth * baseIndentSize) + baseIndentSize);
       const value = nodeValue[key];
       return isPlainObject(nodeValue[key])
-        ? `${prefix}${key}: ${stringifyValue(value, currDepth + 1)}`
+        ? `${prefix}${key}: ${stringifyValue(value, prevDepth + 1)}`
         : `${prefix}${key}: ${value}`;
     })
     .join('\n');
@@ -34,7 +32,7 @@ const typesIndents = {
 const nodeTypesActions = [
   {
     check: (nodeType) => ['added', 'removed', 'unchanged'].some((type) => type === nodeType),
-    action: ({ type, key, value }, depth) => `${typesIndents[type]}${key}: ${stringifyValue(value, depth)}`,
+    action: ({ type, key, value }, depth) => `${typesIndents[type]}${key}: ${stringifyValue(value, depth + 1)}`,
   },
   {
     check: (nodeType) => nodeType === 'nested',
@@ -50,13 +48,16 @@ const nodeTypesActions = [
   {
     check: (nodeType) => nodeType === 'changed',
     action: ({ key, originalValue, newValue }, depth) => [
-      `${typesIndents.added}${key}: ${stringifyValue(newValue, depth)}`,
-      `${typesIndents.removed}${key}: ${stringifyValue(originalValue, depth)}`,
+      `${typesIndents.added}${key}: ${stringifyValue(newValue, depth + 1)}`,
+      `${typesIndents.removed}${key}: ${stringifyValue(originalValue, depth + 1)}`,
     ],
   },
 ];
 
 export default (ast) => {
+  if (isEmpty(ast)) {
+    return '';
+  }
   const inner = (tree, depth = 0) => tree
     .map((node) => {
       const checkedCurrentNodeType = nodeTypesActions.find(({ check }) => check(node.type));

@@ -1,6 +1,7 @@
 import {
   has,
   identity,
+  isEmpty,
   isPlainObject,
   union,
 } from 'lodash';
@@ -62,6 +63,9 @@ const nodeTypesActions = [
 ];
 
 const makeAstDiff = (originalData = {}, newData = {}) => {
+  if ([originalData, newData].every(isEmpty)) {
+    return [];
+  }
   const originalDataKeys = Object.keys(originalData);
   const newDataKeys = Object.keys(newData);
   const unionDataKeys = union(originalDataKeys, newDataKeys);

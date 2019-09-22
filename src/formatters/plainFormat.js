@@ -1,4 +1,4 @@
-import { isPlainObject, identity } from 'lodash';
+import { isEmpty, isPlainObject, identity } from 'lodash';
 
 const stringifyNodePath = (path) => `'${path.join('.')}'`;
 const stringifyNodeValue = (nodeValue) => (isPlainObject(nodeValue) ? '[complex value]' : nodeValue);
@@ -13,6 +13,9 @@ const typesRenders = {
 };
 
 export default (ast) => {
+  if (isEmpty(ast)) {
+    return '';
+  }
   const getChangesList = (tree, path = []) => tree
     .map((node) => {
       const { key, type } = node;
