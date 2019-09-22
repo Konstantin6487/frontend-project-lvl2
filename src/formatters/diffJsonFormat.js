@@ -2,59 +2,68 @@ import { isPlainObject } from 'lodash';
 
 const baseIndentSize = 4;
 
-const stringifyNodeIndent = (indentSize) => ' '.repeat(indentSize);
-
-const stringifyNodeValue = (nodeValue, prevIndentSize) => {
-  if (isPlainObject(nodeValue)) {
-    const start = '{\n';
-    const stringifiedIndent = stringifyNodeIndent(prevIndentSize);
-    const end = `${stringifiedIndent}}`;
-
-    const stringifiedValue = Object
-      .keys(nodeValue)
-      .map((key) => {
-        const innerIndentSize = prevIndentSize + baseIndentSize;
-        const stringifiedInnerIndent = stringifyNodeIndent(innerIndentSize);
-        const value = nodeValue[key];
-        const stringified = stringifyNodeValue(value, innerIndentSize);
-        return `${stringifiedInnerIndent}${key}: ${stringified}\n`;
-      })
-      .join('');
-
-    return `${start}${stringifiedValue}${end}`;
+const stringifyValue = (nodeValue, prevDepth) => {
+  if (!isPlainObject(nodeValue)) {
+    return nodeValue;
   }
-  return nodeValue;
-};
 
-const stringifyNode = (nodeKey, nodeValue, depth, mark = ' ') => {
-  const prevIndentSize = depth * baseIndentSize;
-  const indent = stringifyNodeIndent(prevIndentSize - 2);
-  const value = stringifyNodeValue(nodeValue, prevIndentSize);
-  return `${indent}${mark} ${nodeKey}: ${value}`;
-};
+  const currDepth = prevDepth + 1;
+  const endBracket = ' '.repeat(currDepth * baseIndentSize);
 
-const typesRenders = {
-  added: ({ key, value }, depth) => stringifyNode(key, value, depth, '+'),
-  removed: ({ key, value }, depth) => stringifyNode(key, value, depth, '-'),
-  nested: ({ key, children }, depth, fn) => stringifyNode(key, fn(children, depth + 1), depth),
-  unchanged: ({ key, value }, depth) => stringifyNode(key, value, depth),
-  changed: ({ key, originalValue, newValue }, depth) => (
-    `${typesRenders.added({ key, value: newValue }, depth)}\n${typesRenders.removed({ key, value: originalValue }, depth)}`
-  ),
-};
-
-const format = (ast, depth = 1) => {
-  const renderedTypes = ast
-    .map((node) => {
-      const renderType = typesRenders[node.type];
-      return `${renderType(node, depth, format)}\n`;
+  const stringified = Object
+    .keys(nodeValue)
+    .map((key) => {
+      const prefix = ' '.repeat((currDepth * baseIndentSize) + baseIndentSize);
+      const value = nodeValue[key];
+      return isPlainObject(nodeValue[key])
+        ? `${prefix}${key}: ${stringifyValue(value, currDepth + 1)}`
+        : `${prefix}${key}: ${value}`;
     })
-    .join('');
-  const start = '{\n';
-  const innerIndentSize = depth === 1 ? 0 : (depth - 1) * baseIndentSize;
-  const end = `${stringifyNodeIndent(innerIndentSize)}}`;
+    .join('\n');
 
-  return `${start}${renderedTypes}${end}`;
+  return `{\n${stringified}\n${endBracket}}`;
 };
 
-export default format;
+const prefixTypes = {
+  added: '  + ',
+  removed: '  - ',
+  nested: ' '.repeat(baseIndentSize),
+  unchanged: ' '.repeat(baseIndentSize),
+};
+
+const nodeTypesActions = [
+  {
+    check: (nodeType) => ['added', 'removed', 'unchanged'].some((type) => type === nodeType),
+    action: ({ type, key, value }, depth) => `${prefixTypes[type]}${key}: ${stringifyValue(value, depth)}`,
+  },
+  {
+    check: (nodeType) => nodeType === 'nested',
+    action: ({ type, key, children }, depth, fn) => {
+      const endBracket = ' '.repeat(depth === 0 ? baseIndentSize : (depth * baseIndentSize) + baseIndentSize);
+      return (
+        `${prefixTypes[type]}${key}: {\n${fn(children, depth + 1)}\n${endBracket}}`
+      );
+    },
+  },
+  {
+    check: (nodeType) => nodeType === 'changed',
+    action: ({ key, originalValue, newValue }, depth) => [
+      `${prefixTypes.added}${key}: ${stringifyValue(newValue, depth)}`,
+      `${prefixTypes.removed}${key}: ${stringifyValue(originalValue, depth)}`,
+    ],
+  },
+];
+
+export default (ast) => {
+  const inner = (tree, depth = 0) => tree
+    .map((node) => {
+      const checkedCurrentNodeType = nodeTypesActions.find(({ check }) => check(node.type));
+      const { action } = checkedCurrentNodeType;
+      return action(node, depth, inner);
+    })
+    .flat(Infinity)
+    .map((node) => `${' '.repeat(depth === 0 ? 0 : depth * baseIndentSize)}${node}`)
+    .join('\n');
+  const strinfified = inner(ast);
+  return `{\n${strinfified}\n}`;
+};
