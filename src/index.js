@@ -9,36 +9,22 @@ import { getExtName, getData } from './helpers';
 import parseData from './parsers';
 import getRenderFormat from './formatters';
 
-const makeDiffNode = (type) => (originalData, newData, key, fn) => {
-  const newValue = newData[key];
-  const originalValue = originalData[key];
-
-  const typesActions = {
-    added: () => ({ value: newValue }),
-    removed: () => ({ value: originalValue }),
-    nested: () => ({ children: fn(originalValue, newValue) }),
-    changed: () => ({ newValue, originalValue }),
-    unchanged: () => ({ value: originalValue }),
-  };
-  const makeNodeContent = typesActions[type];
-  const content = makeNodeContent();
-  return ({ type, ...content, key });
-};
-
-const nodeTypesActions = [
+const nodeTypesContent = [
   {
     check: (originalData, newData, key) => [
       !has(originalData, key),
       has(newData, key),
     ].every(Boolean),
-    action: makeDiffNode('added'),
+    getContent: ({ newValue }) => ({ value: newValue }),
+    type: 'added',
   },
   {
     check: (originalData, newData, key) => [
       has(originalData, key),
       !has(newData, key),
     ].every(Boolean),
-    action: makeDiffNode('removed'),
+    getContent: ({ originalValue }) => ({ value: originalValue }),
+    type: 'removed',
   },
   {
     check: (originalData, newData, key) => [
@@ -46,7 +32,8 @@ const nodeTypesActions = [
       has(newData, key),
       [newData[key], originalData[key]].every(isPlainObject),
     ].every(Boolean),
-    action: makeDiffNode('nested'),
+    getContent: ({ newValue, originalValue }, fn) => ({ children: fn(originalValue, newValue) }),
+    type: 'nested',
   },
   {
     check: (originalData, newData, key) => [
@@ -54,11 +41,13 @@ const nodeTypesActions = [
       has(newData, key),
       originalData[key] !== newData[key],
     ].every(Boolean),
-    action: makeDiffNode('changed'),
+    getContent: identity,
+    type: 'changed',
   },
   {
     check: identity,
-    action: makeDiffNode('unchanged'),
+    getContent: ({ originalValue }) => ({ value: originalValue }),
+    type: 'unchanged',
   },
 ];
 
@@ -66,18 +55,25 @@ const makeAstDiff = (originalData = {}, newData = {}) => {
   if ([originalData, newData].every(isEmpty)) {
     return [];
   }
+
   const originalDataKeys = Object.keys(originalData);
   const newDataKeys = Object.keys(newData);
   const unionDataKeys = union(originalDataKeys, newDataKeys);
+
   return unionDataKeys.map((key) => {
-    const checkedCurrentNodeType = nodeTypesActions
+    const checkedCurrentNodeType = nodeTypesContent
       .find(({ check }) => check(originalData, newData, key));
-    const { action } = checkedCurrentNodeType;
-    return action(originalData, newData, key, makeAstDiff);
+    const { getContent, type } = checkedCurrentNodeType;
+    const newValue = newData[key];
+    const originalValue = originalData[key];
+    const nodeContent = getContent({ newValue, originalValue }, makeAstDiff);
+    const node = ({ type, ...nodeContent, key });
+
+    return node;
   });
 };
 
-export default (originalFilePath, newFilePath, formatType = 'diffjson') => {
+export default (originalFilePath, newFilePath, formatType) => {
   const originalFileExt = getExtName(originalFilePath);
   const originalFileData = getData(originalFilePath);
   const parsedOriginalFile = parseData(originalFileExt, originalFileData);
@@ -89,5 +85,6 @@ export default (originalFilePath, newFilePath, formatType = 'diffjson') => {
   const astDiff = makeAstDiff(parsedOriginalFile, parsedNewFile);
   const format = getRenderFormat(formatType);
   const renderedDiff = format(astDiff);
+
   return renderedDiff;
 };
