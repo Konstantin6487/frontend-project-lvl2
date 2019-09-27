@@ -8,7 +8,7 @@ const getFormat = (path) => extname(path).slice(1);
 const getData = (path) => fs.readFileSync(path, 'utf8');
 
 const testCasesFiles = [
-  ['original.json', 'newest.json', 'diff.diffjson'],
+  ['original.json', 'newest.json', 'diff.pretty'],
   ['original.yml', 'newest.yml', 'diff.plain'],
   ['original.ini', 'newest.ini', 'diff.json'],
 ];
@@ -24,7 +24,6 @@ describe('Gendiff tests', () => {
       const diffFormat = getFormat(diffFilePath);
       const result = gendiff(originalFilePath, newFilePath, diffFormat);
       const expected = getData(diffFilePath);
-
       expect(result).toBe(expected);
     },
   );

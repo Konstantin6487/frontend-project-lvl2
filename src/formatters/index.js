@@ -1,9 +1,9 @@
-import toDiffJson from './diffJsonFormat';
+import toPretty from './prettyFormat';
 import toPlain from './plainFormat';
 import toJson from './jsonFormat';
 
 const formatters = {
-  diffjson: toDiffJson,
+  pretty: toPretty,
   plain: toPlain,
   json: toJson,
 };
